@@ -100,6 +100,8 @@ silicon_bridge = density.attractor_params['silicon_bridge']
 finger_length = density.attractor_params['finger_length']
 height = density.attractor_params['height']
 
+black_height = attractor_params['black_height']
+include_black = attractor_params['include_black']
 
 full_period = width_goldfinger + width_siliconfinger
 
@@ -108,7 +110,7 @@ full_period = width_goldfinger + width_siliconfinger
 xinds2 = np.abs(xx) <= finger_length + \
                         include_bridge*silicon_bridge
 yinds2 = np.abs(yy) <= 0.5 * full_period
-zinds2 = np.abs(zz) <= 0.5 * height
+zinds2 = np.abs(zz) <= 0.5 * height + include_black * black_height
 
 ### Define the indices outside of the repeated unit cell structure
 ### to be used if include_edge=True
