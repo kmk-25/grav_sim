@@ -26,6 +26,8 @@ out_path = os.path.join(out_path, out_subdir)
 ### HAVE TO EDIT THIS FUNCTION TO PARSE SIMULATION OUTPUT
 ### THAT HAS MULTIPLE BEAD RADII. TRUE VALUE MEANS IT WILL
 ### BE INCLUDED
+
+### (I don't really know why this is here. For now just running one radius at a time so returning true)
 def rbead_cond(rbead):
     return True
     if rbead > 5.0e-6:
