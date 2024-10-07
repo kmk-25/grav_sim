@@ -9,7 +9,8 @@ import dill as pickle
 import bead_util as bu
 
 
-parent = str( Path(os.path.abspath(__file__)).parents[1] )
+#parent = str( Path(os.path.abspath(__file__)).parents[1] )
+parent = os.path.expanduser('~') 
 
 raw_path = os.path.join(parent, 'raw_results')
 out_path = os.path.join(parent, 'results')
@@ -17,8 +18,9 @@ out_path = os.path.join(parent, 'results')
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
-out_subdir = '7_6um-gbead_1um-unit-cells_z8um-attractor_master/'
+# out_subdir = '7_6um-gbead_1um-unit-cells_z8um-attractor_master/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
+out_subdir = '7_6um-gbead_1um-unit-cells_onlyblack_5umspacing/'
 out_path = os.path.join(out_path, out_subdir)
 
 ### HAVE TO EDIT THIS FUNCTION TO PARSE SIMULATION OUTPUT

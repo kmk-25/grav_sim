@@ -19,7 +19,7 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 ncore = 20
-verbose = True
+verbose = False
 
 ### Parameter list to simulate
 # rbeads = np.array([2.35e-6])  # Bangs
@@ -30,7 +30,7 @@ seps = np.arange(1.0e-6, 25.5e-6, 5.0e-6)
 heights = np.arange(-25.0e-6, 25.5e-6, 5.0e-6)
 
 ### Attractor properties in case they need to be adjusted
-density.attractor_params['include_bridge'] = True
+density.attractor_params['include_bridge'] = False
 density.attractor_params['width_goldfinger'] = 25.0e-6
 density.attractor_params['width_siliconfinger'] = 25.0e-6
 density.attractor_params['height'] = 8.0e-6
@@ -53,8 +53,8 @@ include_edge = True
 dxyz = 1.0e-6
 x_range = (-199.5e-6, 0e-6)
 y_range = (-249.5e-6, 250e-6)
-z_range = (-6.5e-6, 7e-6)
-# z_range = (-7.5e-6, 8e-6)
+z_range = (-3.5e-6, 4e-6)
+#z_range = (-6.5e-6, 7e-6)
 xx, yy, zz, rho = \
     density.build_3d_array(x_range=x_range, dx=dxyz, \
                            y_range=y_range, dy=dxyz, \
@@ -71,7 +71,7 @@ rhobead = 1850.0
 # rhobead = 1550.0
 
 ### Define values of the Yukawa lambda parameter to simulate
-lambdas = np.logspace(-6.7, -3, 3)
+lambdas = np.logspace(-6.7, -3, 150)
 lambdas = lambdas[::-1]
 
 ### Y-points over which to compute the result
@@ -104,8 +104,8 @@ silicon_bridge = density.attractor_params['silicon_bridge']
 finger_length = density.attractor_params['finger_length']
 height = density.attractor_params['height']
 
-black_height = attractor_params['black_height']
-include_black = attractor_params['include_black']
+black_height = density.attractor_params['black_height']
+include_black = density.attractor_params['include_black']
 
 full_period = width_goldfinger + width_siliconfinger
 
@@ -144,7 +144,7 @@ m3 = rho3 * cell_volume
 ### Establish a path to save the data, and create the directory if it
 ### isn't already there
 #results_path = os.path.abspath('../raw_results/')
-results_path = '~/raw_results/'
+results_path = os.path.expanduser('~/raw_results/')
 test_filename = os.path.join(results_path, 'test.p')
 bu.make_all_pardirs(test_filename)
 
@@ -396,3 +396,4 @@ def simulation(params):
 ### Do the sim, yo
 param_list = list(itertools.product(rbeads, seps, heights))
 results = Parallel(n_jobs=ncore)(delayed(simulation)(param) for param in tqdm(param_list))
+
