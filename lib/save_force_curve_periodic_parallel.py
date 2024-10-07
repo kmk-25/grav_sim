@@ -36,6 +36,10 @@ density.attractor_params['width_siliconfinger'] = 25.0e-6
 density.attractor_params['height'] = 8.0e-6
 # density.attractor_params['height'] = 10.0e-6
 
+density.attractor_params['black_height'] = 3.0e-6
+density.attractor_params['include_black'] = True
+density.attractor_params['just_black'] = True
+
 ### Whether or not to include the outer silicon edge at the limits
 ### of y (I think it amounts to a 12um wide strip of silicon) so it
 ### shouldn't change too much. It does increase computation time by 
@@ -139,7 +143,8 @@ m3 = rho3 * cell_volume
 
 ### Establish a path to save the data, and create the directory if it
 ### isn't already there
-results_path = os.path.abspath('../raw_results/')
+#results_path = os.path.abspath('../raw_results/')
+results_path = '~/raw_results/'
 test_filename = os.path.join(results_path, 'test.p')
 bu.make_all_pardirs(test_filename)
 

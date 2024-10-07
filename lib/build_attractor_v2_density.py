@@ -31,6 +31,7 @@ attractor_params['include_bridge'] = False
 
 attractor_params['black_height'] = 3.0e-6
 attractor_params['include_black'] = True
+attractor_params['just_black'] = True
 
 ##################################################################
 ##################################################################
@@ -68,7 +69,7 @@ def density_symmetric(x, y, z):
     within_x = x < 0
     within_z = np.abs(z) < 0.5 * h + (black*black_bool)
     within_y = np.abs(y) < 0.5 * wtot
-    if not (within_x and within_y and within_z):
+    if (not (within_x and within_y and within_z)) or (attractor_params['just_black'] and np.abs(z) < 0.5 * h):
         return 0.0
 
     rhog = attractor_params['rho_gold']

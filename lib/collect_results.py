@@ -25,6 +25,7 @@ out_path = os.path.join(out_path, out_subdir)
 ### THAT HAS MULTIPLE BEAD RADII. TRUE VALUE MEANS IT WILL
 ### BE INCLUDED
 def rbead_cond(rbead):
+    return True
     if rbead > 5.0e-6:
         return False 
     elif rbead > 3.0e-6:
