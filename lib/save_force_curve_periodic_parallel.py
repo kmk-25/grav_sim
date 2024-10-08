@@ -125,10 +125,10 @@ yinds3 = np.abs(yy) >= 0.5 * n_goldfinger * full_period
 xx2 = xx[xinds2]
 yy2 = yy[yinds2]
 zz2 = zz[zinds2]
-rho2 = rho[xinds2,:,:][:,yinds2,:]
+rho2 = rho[xinds2,:,:][:,yinds2,:][:,:,zinds2]
 
 yy3 = yy[yinds3]
-rho3 = rho[xinds2,:,:][:,yinds3,:]
+rho3 = rho[xinds2,:,:][:,yinds3,:][:,:,zinds2]
 
 dx = np.abs(xx[1] - xx[0])
 dy = np.abs(yy[1] - yy[0])

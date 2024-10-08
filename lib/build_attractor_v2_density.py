@@ -62,12 +62,12 @@ def density_symmetric(x, y, z):
 
     ### Establish the easy cases first, returning the appropriate value
     ### and hopefully decreasing runtime
-    black = attractor_params['black_height']
+    black_h = attractor_params['black_height']
     black_bool = attractor_params['include_black']
     h = attractor_params['height']
     wtot = attractor_params['total_width']
     within_x = x < 0
-    within_z = np.abs(z) < 0.5 * h + (black*black_bool)
+    within_z = np.abs(z) < 0.5 * h + (black_h*black_bool)
     within_y = np.abs(y) < 0.5 * wtot
     if (not (within_x and within_y and within_z)) or (attractor_params['just_black'] and np.abs(z) < 0.5 * h):
         return 0.0
