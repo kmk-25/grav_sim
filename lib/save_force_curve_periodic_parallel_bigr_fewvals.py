@@ -24,21 +24,21 @@ verbose = False
 ### Parameter list to simulate
 # rbeads = np.array([2.35e-6])  # Bangs
 # rbeads = np.array([3.78e-6])#, 2.32e-6])  # German
-rbeads = np.array([7.5e-6])
-seps = np.arange(1.0e-6, 25.5e-6, 5.0e-6)
+rbeads = np.array([4.99e-6])
+seps = np.arange(1.0e-6, 25e-6, 1e-6)
 # seps = np.arange(2.0e-6, 10.5e-6, 1.0e-6)
-heights = np.arange(-25.0e-6, 25.5e-6, 5.0e-6)
+heights = np.arange(-12.0e-6, 12.5e-6, 1.0e-6)
 
 ### Attractor properties in case they need to be adjusted
 density.attractor_params['include_bridge'] = False
 density.attractor_params['width_goldfinger'] = 25.0e-6
 density.attractor_params['width_siliconfinger'] = 25.0e-6
-density.attractor_params['height'] = 8.0e-6
-# density.attractor_params['height'] = 10.0e-6
+# density.attractor_params['height'] = 8.0e-6
+density.attractor_params['height'] = 10.0e-6
 
 density.attractor_params['black_height'] = 3.0e-6
 density.attractor_params['include_black'] = True
-density.attractor_params['just_black'] = True
+density.attractor_params['just_black'] = False
 
 ### Whether or not to include the outer silicon edge at the limits
 ### of y (I think it amounts to a 12um wide strip of silicon) so it
@@ -53,8 +53,8 @@ include_edge = True
 dxyz = 1.0e-6
 x_range = (-199.5e-6, 0e-6)
 y_range = (-249.5e-6, 250e-6)
-z_range = (-3.5e-6, 4e-6)
-#z_range = (-6.5e-6, 7e-6)
+#z_range = (-4.5e-6, 5e-6)
+z_range = (-7.5e-6, 8e-6)
 xx, yy, zz, rho = \
     density.build_3d_array(x_range=x_range, dx=dxyz, \
                            y_range=y_range, dy=dxyz, \
@@ -71,13 +71,13 @@ rhobead = 1850.0
 # rhobead = 1550.0
 
 ### Define values of the Yukawa lambda parameter to simulate
-lambdas = np.logspace(-6.7, -3, 150)
+lambdas = np.logspace(-6.7, -3, 50)
 lambdas = lambdas[::-1]
 
 ### Y-points over which to compute the result
 travel = 500.0e-6
 cent = 0.0e-6
-Npoints = 200
+Npoints = 1000
 
 bead_dx = travel / Npoints
 beadposvec = np.linspace(cent - 0.5*travel + bead_dx, \
@@ -144,8 +144,8 @@ m3 = rho3 * cell_volume
 ### Establish a path to save the data, and create the directory if it
 ### isn't already there
 #results_path = os.path.abspath('../raw_results/')
-results_path = os.path.expanduser('~/raw_results/')
-test_filename = os.path.join(results_path, 'test.p')
+results_path = os.path.expanduser('~/raw_results_final/bigr/fewvals')
+test_filename = os.path.join(results_path, 'main_results_smalltest.p')
 bu.make_all_pardirs(test_filename)
 
 ### Assuming n_goldfinger is an odd integer, this just sets up some indices
@@ -396,4 +396,3 @@ def simulation(params):
 ### Do the sim, yo
 param_list = list(itertools.product(rbeads, seps, heights))
 results = Parallel(n_jobs=ncore)(delayed(simulation)(param) for param in tqdm(param_list))
-

@@ -10,17 +10,18 @@ import bead_util as bu
 
 
 #parent = str( Path(os.path.abspath(__file__)).parents[1] )
-parent = os.path.expanduser('~') 
+#parent = os.path.expanduser('~') 
+parent = "/oak/stanford/groups/gratta/sims/"
 
-raw_path = os.path.join(parent, 'raw_results')
-out_path = os.path.join(parent, 'results')
+raw_path = os.path.join(parent, 'raw_results_2/smallr_allvals')
+out_path = os.path.join(parent, 'results_final')
 
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
 # out_subdir = '7_6um-gbead_1um-unit-cells_z8um-attractor_master/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
-out_subdir = '7_6um-gbead_1um-unit-cells_onlyblack_5umspacing/'
+out_subdir = 'smallr_1-17'
 out_path = os.path.join(out_path, out_subdir)
 
 ### HAVE TO EDIT THIS FUNCTION TO PARSE SIMULATION OUTPUT
@@ -30,10 +31,10 @@ def rbead_cond(rbead):
     return True
     if rbead > 5.0e-6:
         return False 
-    elif rbead > 3.0e-6:
+    elif rbead > 4.0e-6:
         return True
     else:
-        return True
+        return False
 
 test_filename = os.path.join(out_path, 'test.p')
 bu.make_all_pardirs(test_filename)
@@ -163,8 +164,8 @@ try:
     np.save(os.path.join(out_path, 'ypos.npy'), posvec)
     np.save(os.path.join(out_path, 'zpos.npy'), heights)
 
-except Exception:
-    print("Couldn't save the data.")
+except Exception as e:
+    print(f"Couldn't save the data due to: \n {e}")
 
 
 
