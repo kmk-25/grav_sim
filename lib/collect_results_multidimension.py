@@ -74,6 +74,7 @@ for fil_ind, fil in enumerate(raw_filenames):
     if not len(posvec):
         posvec = sim_out['posvec']
         attractor_params = sim_out['attractor_params']
+        r0s = list(sim_out[rbead][sep][height].keys())
         rhobead = sim_out['rhobead']
     else:
         assert np.sum(posvec - sim_out['posvec']) == 0.0
@@ -85,6 +86,8 @@ for fil_ind, fil in enumerate(raw_filenames):
 
 ### Select unique values of simulation parameters and construct
 ### sorted arrays of those values
+r0s = np.sort(np.array(r0s))
+
 seps = np.sort(np.unique(seps))
 heights = np.sort(np.unique(heights))
 
@@ -93,8 +96,8 @@ grid_check = np.zeros((len(seps), len(heights)))
 ### Build up the 3D array of Newtonian and Yukawa-modified forces
 ### for each of the positions simulated
 Goutarr = np.zeros((len(seps), len(posvec), len(heights), 3))
-dim1arr = np.zeros((len(seps), len(posvec), len(heights), 3))
-dim2arr = np.zeros((len(seps), len(posvec), len(heights), 3))
+dim1arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
+dim2arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
 
 for fil_ind, fil in enumerate(raw_filenames):
 
@@ -127,9 +130,10 @@ for fil_ind, fil in enumerate(raw_filenames):
     grid_check[sepind, heightind] += 1.0
 
     for ind in [0,1,2]:
-        Goutarr[sepind,:,heightind,ind] = dat[ind]
-        dim1arr[sepind,:,heightind,ind] = dat[ind+3]
-        dim2arr[sepind,:,heightind,ind] = dat[ind+6]
+        Goutarr[sepind,:,heightind,ind] = dat[r0s[0]][ind]
+        for r0ind, r0 in enumerate(r0s):
+            dim1arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+3]
+            dim2arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+6]
 
 print(rbead)
 print("Done!")

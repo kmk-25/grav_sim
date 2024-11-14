@@ -70,9 +70,9 @@ G = 6.67e-11       # m^3 / (kg s^2)
 rhobead = 1850.0
 # rhobead = 1550.0
 
-### Define values of the Yukawa lambda parameter to simulate
-lambdas = np.logspace(-6.7, -3, 3)
-lambdas = lambdas[::-1]
+### Define values of the power law r0 parameter to simulate
+r0s = np.logspace(-6.7, -3, 3)
+r0s = r0s[::-1]
 
 ### Y-points over which to compute the result
 travel = 500.0e-6
@@ -104,8 +104,8 @@ silicon_bridge = density.attractor_params['silicon_bridge']
 finger_length = density.attractor_params['finger_length']
 height = density.attractor_params['height']
 
-black_height = attractor_params['black_height']
-include_black = attractor_params['include_black']
+black_height = density.attractor_params['black_height']
+include_black = density.attractor_params['include_black']
 
 full_period = width_goldfinger + width_siliconfinger
 
@@ -187,9 +187,10 @@ def simulation(params):
 
     ### Instantiate a dictionary that will be populated with results
     results_dic = {}
-    results_dic['order'] = 'Rbead, Sep, Height'
+    results_dic['order'] = 'Rbead, Sep, Height, r0'
     results_dic[rbead] = {}
     results_dic[rbead][sep] = {}
+    results_dic[rbead][sep][height] = {}
 
     ### Some timing stuff
     all_start = time.time()
@@ -323,10 +324,11 @@ def simulation(params):
         stop = time.time()
         calc_times.append(stop - start)
 
-    results_dic[rbead][sep][height] = \
-                    (newGs[0], newGs[1], newGs[2], \
-                     newGs_dim1[0], newGs_dim1[1], newGs_dim1[2], \
-                     newGs_dim2[0], newGs_dim2[1], newGs_dim2[2])
+    for r0 in r0s:
+        results_dic[rbead][sep][height][r0] = \
+                        (newGs[0], newGs[1], newGs[2], \
+                        newGs_dim1[0]*r0, newGs_dim1[1]*r0, newGs_dim1[2]*r0, \
+                        newGs_dim2[0]*r0**2, newGs_dim2[1]*r0**2, newGs_dim2[2]*r0**2)
 
     all_stop = time.time()
 
