@@ -129,6 +129,7 @@ for fil_ind, fil in enumerate(raw_filenames):
     heightind = np.argmin( np.abs(heights - height) )
     grid_check[sepind, heightind] += 1.0
 
+    ### This is the only major difference from Chas's code, since each r0 value has 3 dimensions of analysis saved in the same array.
     for ind in [0,1,2]:
         Goutarr[sepind,:,heightind,ind] = dat[r0s[0]][ind]
         for r0ind, r0 in enumerate(r0s):
