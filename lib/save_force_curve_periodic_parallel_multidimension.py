@@ -145,7 +145,7 @@ m3 = rho3 * cell_volume
 ### isn't already there
 #results_path = os.path.abspath('../raw_results/')
 #results_path = os.path.expanduser('~/raw_results_/')
-results_path = "/home/kmkohn/Test/rawdata"
+results_path = "/oak/stanford/groups/gratta/sims/raw_results_multidimensional"
 
 test_filename = os.path.join(results_path, 'test.p')
 bu.make_all_pardirs(test_filename)
