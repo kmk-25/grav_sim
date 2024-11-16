@@ -219,24 +219,25 @@ def simulation(params):
         ### of the microsphere
         full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
+        ### Refer to calculated values from the mathematica notebook (to do: add link to elog post)
         gravfac = 4*rbead**3/3
         dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
         dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
-
-
-
-        ### Refer to a soon-to-exist document expanding on Alex R's
         prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
         ### Append the computed values for the force from a single finger
+
+        ### Standard Gravity
         Gforcecurves[0].append( np.sum(prefac * gravfac * xsep / full_sep) )
         Gforcecurves[1].append( np.sum(prefac * gravfac * ysep / full_sep) )
         Gforcecurves[2].append( np.sum(prefac * gravfac * zsep / full_sep) )
 
+        ### 1/r^2 term
         Gforcecurves_dim1[0].append( np.sum(prefac * dim1fac * xsep / full_sep) )
         Gforcecurves_dim1[1].append( np.sum(prefac * dim1fac * ysep / full_sep) )
         Gforcecurves_dim1[2].append( np.sum(prefac * dim1fac * zsep / full_sep) )
 
+        ### 1/r^3 term
         Gforcecurves_dim2[0].append( np.sum(prefac * dim2fac * xsep / full_sep) )
         Gforcecurves_dim2[1].append( np.sum(prefac * dim2fac * ysep / full_sep) )
         Gforcecurves_dim2[2].append( np.sum(prefac * dim2fac * zsep / full_sep) )
@@ -281,13 +282,10 @@ def simulation(params):
                                            beadpos[2] - zz2, indexing='ij')
             full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
+            ### Refer to calculated values from the mathematica notebook (to do: add link to elog post)
             gravfac = 4*rbead**3/3
             dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
             dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
-
-
-
-            ### Refer to a soon-to-exist document expanding on Alex R's
             prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
             newGs[0][ind] += np.sum(prefac * Gterm * xsep / full_sep) 
@@ -324,6 +322,8 @@ def simulation(params):
         stop = time.time()
         calc_times.append(stop - start)
 
+    ### Each additional dimensional term is proportional to radius parameter r0^(N-1)
+    ### so multiply at the end to save computation time.
     for r0 in r0s:
         results_dic[rbead][sep][height][r0] = \
                         (newGs[0], newGs[1], newGs[2], \
