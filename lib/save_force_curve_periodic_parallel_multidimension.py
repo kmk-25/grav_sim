@@ -24,21 +24,21 @@ verbose = True
 ### Parameter list to simulate
 # rbeads = np.array([2.35e-6])  # Bangs
 # rbeads = np.array([3.78e-6])#, 2.32e-6])  # German
-rbeads = np.array([7.5e-6])
-seps = np.arange(1.0e-6, 25.5e-6, 5.0e-6)
+rbeads = np.array([3.78e-6, 4.99e-6])
+seps = np.arange(1.0e-6, 25.5e-6, 1.0e-6)
 # seps = np.arange(2.0e-6, 10.5e-6, 1.0e-6)
-heights = np.arange(-25.0e-6, 25.5e-6, 5.0e-6)
+heights = np.arange(-25.0e-6, 25.5e-6, 1.0e-6)
 
 ### Attractor properties in case they need to be adjusted
-density.attractor_params['include_bridge'] = True
+density.attractor_params['include_bridge'] = False
 density.attractor_params['width_goldfinger'] = 25.0e-6
 density.attractor_params['width_siliconfinger'] = 25.0e-6
-density.attractor_params['height'] = 8.0e-6
-# density.attractor_params['height'] = 10.0e-6
+# density.attractor_params['height'] = 8.0e-6
+density.attractor_params['height'] = 10.0e-6
 
 density.attractor_params['black_height'] = 3.0e-6
 density.attractor_params['include_black'] = True
-density.attractor_params['just_black'] = True
+density.attractor_params['just_black'] = False
 
 ### Whether or not to include the outer silicon edge at the limits
 ### of y (I think it amounts to a 12um wide strip of silicon) so it
@@ -53,8 +53,8 @@ include_edge = True
 dxyz = 1.0e-6
 x_range = (-199.5e-6, 0e-6)
 y_range = (-249.5e-6, 250e-6)
-z_range = (-6.5e-6, 7e-6)
-# z_range = (-7.5e-6, 8e-6)
+# z_range = (-6.5e-6, 7e-6)
+z_range = (-7.5e-6, 8e-6)
 xx, yy, zz, rho = \
     density.build_3d_array(x_range=x_range, dx=dxyz, \
                            y_range=y_range, dy=dxyz, \
@@ -71,13 +71,13 @@ rhobead = 1850.0
 # rhobead = 1550.0
 
 ### Define values of the power law r0 parameter to simulate
-r0s = np.logspace(-6.7, -3, 3)
+r0s = np.logspace(-6.7, -3, 150)
 r0s = r0s[::-1]
 
 ### Y-points over which to compute the result
 travel = 500.0e-6
 cent = 0.0e-6
-Npoints = 200
+Npoints = 1000
 
 bead_dx = travel / Npoints
 beadposvec = np.linspace(cent - 0.5*travel + bead_dx, \
@@ -125,10 +125,10 @@ yinds3 = np.abs(yy) >= 0.5 * n_goldfinger * full_period
 xx2 = xx[xinds2]
 yy2 = yy[yinds2]
 zz2 = zz[zinds2]
-rho2 = rho[xinds2,:,:][:,yinds2,:]
+rho2 = rho[xinds2,:,:][:,yinds2,:][:,:,zinds2]
 
 yy3 = yy[yinds3]
-rho3 = rho[xinds2,:,:][:,yinds3,:]
+rho3 = rho[xinds2,:,:][:,yinds3,:][:,:,zinds2]
 
 dx = np.abs(xx[1] - xx[0])
 dy = np.abs(yy[1] - yy[0])
@@ -144,7 +144,9 @@ m3 = rho3 * cell_volume
 ### Establish a path to save the data, and create the directory if it
 ### isn't already there
 #results_path = os.path.abspath('../raw_results/')
-results_path = '~/raw_results/'
+#results_path = os.path.expanduser('~/raw_results_/')
+results_path = "/home/kmkohn/Test/rawdata"
+
 test_filename = os.path.join(results_path, 'test.p')
 bu.make_all_pardirs(test_filename)
 
@@ -219,32 +221,31 @@ def simulation(params):
         ### of the microsphere
         full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
-        ### Refer to calculated values from the mathematica notebook (to do: add link to elog post)
         gravfac = 4*rbead**3/3
         dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
         dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
+
+
+
+        ### Refer to a soon-to-exist document expanding on Alex R's
         prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
         ### Append the computed values for the force from a single finger
-
-        ### Standard Gravity
         Gforcecurves[0].append( np.sum(prefac * gravfac * xsep / full_sep) )
         Gforcecurves[1].append( np.sum(prefac * gravfac * ysep / full_sep) )
         Gforcecurves[2].append( np.sum(prefac * gravfac * zsep / full_sep) )
 
-        ### 1/r^2 term
         Gforcecurves_dim1[0].append( np.sum(prefac * dim1fac * xsep / full_sep) )
         Gforcecurves_dim1[1].append( np.sum(prefac * dim1fac * ysep / full_sep) )
         Gforcecurves_dim1[2].append( np.sum(prefac * dim1fac * zsep / full_sep) )
 
-        ### 1/r^3 term
         Gforcecurves_dim2[0].append( np.sum(prefac * dim2fac * xsep / full_sep) )
         Gforcecurves_dim2[1].append( np.sum(prefac * dim2fac * ysep / full_sep) )
         Gforcecurves_dim2[2].append( np.sum(prefac * dim2fac * zsep / full_sep) )
 
     Gforcecurves = np.array(Gforcecurves)
-    Gforcecurves_dim1 = np.array(Gforcecurves)
-    Gforcecurves_dim2 = np.array(Gforcecurves)
+    Gforcecurves_dim1 = np.array(Gforcecurves_dim1)
+    Gforcecurves_dim2 = np.array(Gforcecurves_dim2)
 
     ### Build interpolating functions from the long position vector
     ### and the force due to a single period of the fingers
@@ -252,13 +253,13 @@ def simulation(params):
     GY = interp.interp1d(beadposvec2, Gforcecurves[1], kind='cubic')
     GZ = interp.interp1d(beadposvec2, Gforcecurves[2], kind='cubic')
 
-    GX_dim1 = interp.interp1d(beadposvec2, Gforcecurves[0], kind='cubic')
-    GY_dim1 = interp.interp1d(beadposvec2, Gforcecurves[1], kind='cubic')
-    GZ_dim1 = interp.interp1d(beadposvec2, Gforcecurves[2], kind='cubic')
+    GX_dim1 = interp.interp1d(beadposvec2, Gforcecurves_dim1[0], kind='cubic')
+    GY_dim1 = interp.interp1d(beadposvec2, Gforcecurves_dim1[1], kind='cubic')
+    GZ_dim1 = interp.interp1d(beadposvec2, Gforcecurves_dim1[2], kind='cubic')
 
-    GX_dim2 = interp.interp1d(beadposvec2, Gforcecurves[0], kind='cubic')
-    GY_dim2 = interp.interp1d(beadposvec2, Gforcecurves[1], kind='cubic')
-    GZ_dim2 = interp.interp1d(beadposvec2, Gforcecurves[2], kind='cubic')
+    GX_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[0], kind='cubic')
+    GY_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[1], kind='cubic')
+    GZ_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[2], kind='cubic')
 
 
     ### Loop over the actual array of desired bead positions, and compute the
@@ -282,10 +283,13 @@ def simulation(params):
                                            beadpos[2] - zz2, indexing='ij')
             full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
-            ### Refer to calculated values from the mathematica notebook (to do: add link to elog post)
             gravfac = 4*rbead**3/3
             dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
             dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
+
+
+
+            ### Refer to a soon-to-exist document expanding on Alex R's
             prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
             newGs[0][ind] += np.sum(prefac * Gterm * xsep / full_sep) 
@@ -322,8 +326,6 @@ def simulation(params):
         stop = time.time()
         calc_times.append(stop - start)
 
-    ### Each additional dimensional term is proportional to radius parameter r0^(N-1)
-    ### so multiply at the end to save computation time.
     for r0 in r0s:
         results_dic[rbead][sep][height][r0] = \
                         (newGs[0], newGs[1], newGs[2], \

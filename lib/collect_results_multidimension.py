@@ -9,15 +9,16 @@ import dill as pickle
 import bead_util as bu
 
 
-parent = str( Path(os.path.abspath(__file__)).parents[1] )
+#parent = str( Path(os.path.abspath(__file__)).parents[1] )
+parent = "/home/kmkohn/Test"
 
-raw_path = os.path.join(parent, 'raw_results')
+raw_path = os.path.join(parent, 'rawdata')
 out_path = os.path.join(parent, 'results')
 
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
-out_subdir = '7_6um-gbead_1um-unit-cells_z8um-attractor_master/'
+out_subdir = 'res/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
 out_path = os.path.join(out_path, out_subdir)
 
@@ -163,6 +164,7 @@ try:
     np.save(os.path.join(out_path, 'xpos.npy'), seps + rbead)
     np.save(os.path.join(out_path, 'ypos.npy'), posvec)
     np.save(os.path.join(out_path, 'zpos.npy'), heights)
+    np.save(os.path.join(out_path, 'r0s.npy'), r0s)
 
 except Exception:
     print("Couldn't save the data.")
