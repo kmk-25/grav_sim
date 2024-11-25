@@ -198,9 +198,6 @@ def simulation(params):
     all_start = time.time()
     calc_times = []
 
-    ### A thing that needs to be in every term (POSSIBLE SIGN AMBIGUITY)
-    Gterm = 2. * rbead**3
-
     ### Loop over the long array of bead positions and compute the force from
     ### only the central finger. This can be sampled and added up to build the
     ### force curve from the entire attractor
@@ -292,9 +289,9 @@ def simulation(params):
             ### Refer to a soon-to-exist document expanding on Alex R's
             prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
-            newGs[0][ind] += np.sum(prefac * Gterm * xsep / full_sep) 
-            newGs[1][ind] += np.sum(prefac * Gterm * ysep / full_sep) 
-            newGs[2][ind] += np.sum(prefac * Gterm * zsep / full_sep)
+            newGs[0][ind] += np.sum(prefac * gravfac * xsep / full_sep) 
+            newGs[1][ind] += np.sum(prefac * gravfac * ysep / full_sep) 
+            newGs[2][ind] += np.sum(prefac * gravfac * zsep / full_sep)
 
             newGs_dim1[0][ind] += np.sum(prefac * dim1fac * xsep / full_sep) 
             newGs_dim1[1][ind] += np.sum(prefac * dim1fac * ysep / full_sep) 
