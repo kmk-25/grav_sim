@@ -1,0 +1,6 @@
+*.ipynb
+*.p
+*.npy
+__pycache__/*
+*.prof
+*.lprof

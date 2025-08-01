@@ -10,15 +10,15 @@ import bead_util as bu
 
 
 #parent = str( Path(os.path.abspath(__file__)).parents[1] )
-parent = "/home/kmkohn/Test"
+parent = "/home/kmkohn/2024-2025/Thesis_analysis/FEA/Data"
 
-raw_path = os.path.join(parent, 'rawdata')
-out_path = os.path.join(parent, 'results')
+raw_path = os.path.join(parent, 'rawdata_polynomial_platinumblack/1umspacing')
+out_path = os.path.join(parent, 'polynomial_platinumblack/1umspacing')
 
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
-out_subdir = 'res/'
+out_subdir = '10um/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
 out_path = os.path.join(out_path, out_subdir)
 
@@ -26,11 +26,10 @@ out_path = os.path.join(out_path, out_subdir)
 ### THAT HAS MULTIPLE BEAD RADII. TRUE VALUE MEANS IT WILL
 ### BE INCLUDED
 def rbead_cond(rbead):
-    return True
-    if rbead > 5.0e-6:
-        return False 
+    if rbead > 4.0e-6:
+        return True 
     elif rbead > 3.0e-6:
-        return True
+        return False
     else:
         return True
 
