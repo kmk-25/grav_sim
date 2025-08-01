@@ -19,15 +19,17 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 ncore = 20
-verbose = True
+verbose = False
 
 ### Parameter list to simulate
 # rbeads = np.array([2.35e-6])  # Bangs
 # rbeads = np.array([3.78e-6])#, 2.32e-6])  # German
-rbeads = np.array([3.78e-6, 4.99e-6])
-seps = np.arange(1.0e-6, 25.5e-6, 1.0e-6)
+rbeads = np.array([4.99e-6, 3.78e-6])
+#seps = np.arange(1.0e-6, 25.5e-6, 1.0e-6)
+seps = np.arange(1.0e-6, 20.5e-6, 1.0e-6)
 # seps = np.arange(2.0e-6, 10.5e-6, 1.0e-6)
-heights = np.arange(-25.0e-6, 25.5e-6, 1.0e-6)
+#heights = np.arange(-25.0e-6, 25.5e-6, 1.0e-6)
+heights = [0]
 
 ### Attractor properties in case they need to be adjusted
 density.attractor_params['include_bridge'] = False
@@ -35,10 +37,19 @@ density.attractor_params['width_goldfinger'] = 25.0e-6
 density.attractor_params['width_siliconfinger'] = 25.0e-6
 # density.attractor_params['height'] = 8.0e-6
 density.attractor_params['height'] = 10.0e-6
+density.attractor_params['total_width'] = \
+                density.attractor_params['n_goldfinger'] \
+                        * density.attractor_params['width_goldfinger'] \
+              + (density.attractor_params['n_goldfinger'] - 1) \
+                        * density.attractor_params['width_siliconfinger'] \
+              + 2.0 * density.attractor_params['width_outersilicon']
 
 density.attractor_params['black_height'] = 3.0e-6
 density.attractor_params['include_black'] = True
 density.attractor_params['just_black'] = False
+density.attractor_params['total_height'] = \
+                density.attractor_params['height'] \
+                        + 2*density.attractor_params['black_height']*density.attractor_params['include_black']
 
 ### Whether or not to include the outer silicon edge at the limits
 ### of y (I think it amounts to a 12um wide strip of silicon) so it
@@ -50,16 +61,27 @@ include_edge = True
 ### docstring (and consider how to define the CENTERS of cubic unit
 ### cells, such that the unit cells themselves actually span the 
 ### physical space that you want).
-dxyz = 1.0e-6
-x_range = (-199.5e-6, 0e-6)
-y_range = (-249.5e-6, 250e-6)
-# z_range = (-6.5e-6, 7e-6)
-z_range = (-7.5e-6, 8e-6)
+dxyz = (1)*1e-6
+#dx=2
+#dy=2
+#dz=1
+x_range = (-200*1e-6+dxyz/2, 0e-6)
+y_range = ((-density.attractor_params['total_width']/2+dxyz/2), density.attractor_params['total_width']/2)
+z_range = (-density.attractor_params['total_height']/2+dxyz/2, density.attractor_params['total_height']/2)
 xx, yy, zz, rho = \
     density.build_3d_array(x_range=x_range, dx=dxyz, \
                            y_range=y_range, dy=dxyz, \
                            z_range=z_range, dz=dxyz, \
-                           verbose=verbose)
+                           verbose=verbose, manualadjust=False)
+
+# x_range = (-200*1e-6+dx/2, 0e-6)
+# y_range = ((-density.attractor_params['total_width']/2+dy/2), density.attractor_params['total_width']/2)
+# z_range = (-density.attractor_params['total_height']/2+dz/2, density.attractor_params['total_height']/2)
+# xx, yy, zz, rho = \
+#     density.build_3d_array(x_range=x_range, dx=dx, \
+#                            y_range=y_range, dy=dy, \
+#                            z_range=z_range, dz=dz, \
+#                            verbose=verbose)
 
 if verbose:
     print("Density Loaded.")
@@ -71,7 +93,7 @@ rhobead = 1850.0
 # rhobead = 1550.0
 
 ### Define values of the power law r0 parameter to simulate
-r0s = np.logspace(-6.7, -3, 150)
+r0s = np.logspace(-6.7, -3, 30)
 r0s = r0s[::-1]
 
 ### Y-points over which to compute the result
@@ -102,7 +124,7 @@ include_bridge = density.attractor_params['include_bridge']
 silicon_bridge = density.attractor_params['silicon_bridge']
 
 finger_length = density.attractor_params['finger_length']
-height = density.attractor_params['height']
+attractor_height = density.attractor_params['height']
 
 black_height = density.attractor_params['black_height']
 include_black = density.attractor_params['include_black']
@@ -114,7 +136,7 @@ full_period = width_goldfinger + width_siliconfinger
 xinds2 = np.abs(xx) <= finger_length + \
                         include_bridge*silicon_bridge
 yinds2 = np.abs(yy) <= 0.5 * full_period
-zinds2 = np.abs(zz) <= 0.5 * height + include_black * black_height
+zinds2 = np.abs(zz) <= 0.5 * attractor_height + include_black * black_height
 
 ### Define the indices outside of the repeated unit cell structure
 ### to be used if include_edge=True
@@ -145,7 +167,7 @@ m3 = rho3 * cell_volume
 ### isn't already there
 #results_path = os.path.abspath('../raw_results/')
 #results_path = os.path.expanduser('~/raw_results_/')
-results_path = "/home/kmkohn/Test/rawdata"
+results_path = "/home/kmkohn/2024-2025/Thesis_analysis/FEA/Data/rawdata_polynomial_platinumblack/1umspacing"
 
 test_filename = os.path.join(results_path, 'test.p')
 bu.make_all_pardirs(test_filename)
@@ -204,6 +226,8 @@ def simulation(params):
     Gforcecurves = [[], [], []]
     Gforcecurves_dim1 = [[], [], []]
     Gforcecurves_dim2 = [[], [], []]
+    Gforcecurves_dim3 = [[], [], []]
+    Gforcecurves_dim4 = [[], [], []]
     for ind, ypos in enumerate(beadposvec2):
         beadpos = [sep+rbead, ypos, height]
 
@@ -219,10 +243,11 @@ def simulation(params):
         full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
         gravfac = 4*rbead**3/3
-        dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
-        dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
-
-
+        dim1fac = -2*(rbead*full_sep-np.arctanh(rbead/full_sep)*(rbead**2+np.square(full_sep)))
+        dim2fac = -4*rbead**3/(rbead**2-np.square(full_sep))
+        dim3fac = 2*((rbead*full_sep*(rbead**2+full_sep**2))/(rbead**2-full_sep**2)**2-np.arctanh(rbead/full_sep))
+        dim4fac = 4*rbead**3*(rbead**2-5*full_sep**2)/(3*(rbead**2-full_sep**2)**3)
+        
 
         ### Refer to a soon-to-exist document expanding on Alex R's
         prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
@@ -239,10 +264,20 @@ def simulation(params):
         Gforcecurves_dim2[0].append( np.sum(prefac * dim2fac * xsep / full_sep) )
         Gforcecurves_dim2[1].append( np.sum(prefac * dim2fac * ysep / full_sep) )
         Gforcecurves_dim2[2].append( np.sum(prefac * dim2fac * zsep / full_sep) )
+        
+        Gforcecurves_dim3[0].append( np.sum(prefac * dim3fac * xsep / full_sep) )
+        Gforcecurves_dim3[1].append( np.sum(prefac * dim3fac * ysep / full_sep) )
+        Gforcecurves_dim3[2].append( np.sum(prefac * dim3fac * zsep / full_sep) )
+        
+        Gforcecurves_dim4[0].append( np.sum(prefac * dim4fac * xsep / full_sep) )
+        Gforcecurves_dim4[1].append( np.sum(prefac * dim4fac * ysep / full_sep) )
+        Gforcecurves_dim4[2].append( np.sum(prefac * dim4fac * zsep / full_sep) )
 
     Gforcecurves = np.array(Gforcecurves)
     Gforcecurves_dim1 = np.array(Gforcecurves_dim1)
     Gforcecurves_dim2 = np.array(Gforcecurves_dim2)
+    Gforcecurves_dim3 = np.array(Gforcecurves_dim3)
+    Gforcecurves_dim4 = np.array(Gforcecurves_dim4)
 
     ### Build interpolating functions from the long position vector
     ### and the force due to a single period of the fingers
@@ -257,6 +292,14 @@ def simulation(params):
     GX_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[0], kind='cubic')
     GY_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[1], kind='cubic')
     GZ_dim2 = interp.interp1d(beadposvec2, Gforcecurves_dim2[2], kind='cubic')
+    
+    GX_dim3 = interp.interp1d(beadposvec2, Gforcecurves_dim3[0], kind='cubic')
+    GY_dim3 = interp.interp1d(beadposvec2, Gforcecurves_dim3[1], kind='cubic')
+    GZ_dim3 = interp.interp1d(beadposvec2, Gforcecurves_dim3[2], kind='cubic')
+    
+    GX_dim4 = interp.interp1d(beadposvec2, Gforcecurves_dim4[0], kind='cubic')
+    GY_dim4 = interp.interp1d(beadposvec2, Gforcecurves_dim4[1], kind='cubic')
+    GZ_dim4 = interp.interp1d(beadposvec2, Gforcecurves_dim4[2], kind='cubic')
 
 
     ### Loop over the actual array of desired bead positions, and compute the
@@ -264,6 +307,8 @@ def simulation(params):
     newGs = np.zeros((3, len(beadposvec)))
     newGs_dim1 = np.zeros((3, len(beadposvec)))
     newGs_dim2 = np.zeros((3, len(beadposvec)))
+    newGs_dim3 = np.zeros((3, len(beadposvec)))
+    newGs_dim4 = np.zeros((3, len(beadposvec)))
     for ind, ypos in enumerate(beadposvec):
         start = time.time()
 
@@ -281,13 +326,15 @@ def simulation(params):
             full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
             gravfac = 4*rbead**3/3
-            dim1fac = (2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
-            dim2fac = 4*rbead**3/(rbead**2-np.square(full_sep))
+            dim1fac = -(2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
+            dim2fac = -4*rbead**3/(rbead**2-np.square(full_sep))
+            dim3fac = 2*((rbead*full_sep*(rbead**2+full_sep**2))/(rbead**2-full_sep**2)**2-np.arctanh(rbead/full_sep))
+            dim4fac = 4*rbead**3*(rbead**2-5*full_sep**2)/(3*(rbead**2-full_sep**2)**3)
 
 
 
             ### Refer to a soon-to-exist document expanding on Alex R's
-            prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
+            prefac = -1.0 * (G * m3 * rhobead * np.pi)/np.square(full_sep)
 
             newGs[0][ind] += np.sum(prefac * gravfac * xsep / full_sep) 
             newGs[1][ind] += np.sum(prefac * gravfac * ysep / full_sep) 
@@ -300,6 +347,14 @@ def simulation(params):
             newGs_dim2[0][ind] += np.sum(prefac * dim2fac * xsep / full_sep) 
             newGs_dim2[1][ind] += np.sum(prefac * dim2fac * ysep / full_sep) 
             newGs_dim2[2][ind] += np.sum(prefac * dim2fac * zsep / full_sep)
+            
+            newGs_dim3[0][ind] += np.sum(prefac * dim3fac * xsep / full_sep) 
+            newGs_dim3[1][ind] += np.sum(prefac * dim3fac * ysep / full_sep) 
+            newGs_dim3[2][ind] += np.sum(prefac * dim3fac * zsep / full_sep)
+            
+            newGs_dim4[0][ind] += np.sum(prefac * dim4fac * xsep / full_sep) 
+            newGs_dim4[1][ind] += np.sum(prefac * dim4fac * ysep / full_sep) 
+            newGs_dim4[2][ind] += np.sum(prefac * dim4fac * zsep / full_sep)
 
         ### Find the finger in which we're in front of, and compute an 
         ### equivalent position as if we're in front of the center finger
@@ -318,6 +373,14 @@ def simulation(params):
         newGs_dim2[0][ind] += np.sum(GX_dim2(newypos + (finger_inds+finger_ind) * full_period))
         newGs_dim2[1][ind] += np.sum(GY_dim2(newypos + (finger_inds+finger_ind) * full_period))
         newGs_dim2[2][ind] += np.sum(GZ_dim2(newypos + (finger_inds+finger_ind) * full_period)) 
+        
+        newGs_dim3[0][ind] += np.sum(GX_dim3(newypos + (finger_inds+finger_ind) * full_period))
+        newGs_dim3[1][ind] += np.sum(GY_dim3(newypos + (finger_inds+finger_ind) * full_period))
+        newGs_dim3[2][ind] += np.sum(GZ_dim3(newypos + (finger_inds+finger_ind) * full_period)) 
+        
+        newGs_dim4[0][ind] += np.sum(GX_dim4(newypos + (finger_inds+finger_ind) * full_period))
+        newGs_dim4[1][ind] += np.sum(GY_dim4(newypos + (finger_inds+finger_ind) * full_period))
+        newGs_dim4[2][ind] += np.sum(GZ_dim4(newypos + (finger_inds+finger_ind) * full_period)) 
 
 
         stop = time.time()
@@ -327,7 +390,9 @@ def simulation(params):
         results_dic[rbead][sep][height][r0] = \
                         (newGs[0], newGs[1], newGs[2], \
                         newGs_dim1[0]*r0, newGs_dim1[1]*r0, newGs_dim1[2]*r0, \
-                        newGs_dim2[0]*r0**2, newGs_dim2[1]*r0**2, newGs_dim2[2]*r0**2)
+                        newGs_dim2[0]*r0**2, newGs_dim2[1]*r0**2, newGs_dim2[2]*r0**2, \
+                        newGs_dim3[0]*r0**3, newGs_dim3[1]*r0**3, newGs_dim3[2]*r0**3, \
+                        newGs_dim4[0]*r0**4, newGs_dim4[1]*r0**4, newGs_dim4[2]*r0**4)
 
     all_stop = time.time()
 
@@ -357,3 +422,4 @@ def simulation(params):
 ### Do the sim, yo
 param_list = list(itertools.product(rbeads, seps, heights))
 results = Parallel(n_jobs=ncore)(delayed(simulation)(param) for param in tqdm(param_list))
+#simulation(param_list)

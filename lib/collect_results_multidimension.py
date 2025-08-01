@@ -10,15 +10,15 @@ import bead_util as bu
 
 
 #parent = str( Path(os.path.abspath(__file__)).parents[1] )
-parent = "/home/kmkohn/Test"
+parent = "/home/kmkohn/2024-2025/Thesis_analysis/FEA/Data"
 
-raw_path = os.path.join(parent, 'rawdata')
-out_path = os.path.join(parent, 'results')
+raw_path = os.path.join(parent, 'rawdata_polynomial_platinumblack/1umspacing')
+out_path = os.path.join(parent, 'polynomial_platinumblack/1umspacing')
 
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
-out_subdir = 'res/'
+out_subdir = '10um/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
 out_path = os.path.join(out_path, out_subdir)
 
@@ -26,11 +26,10 @@ out_path = os.path.join(out_path, out_subdir)
 ### THAT HAS MULTIPLE BEAD RADII. TRUE VALUE MEANS IT WILL
 ### BE INCLUDED
 def rbead_cond(rbead):
-    return True
-    if rbead > 5.0e-6:
-        return False 
+    if rbead > 4.0e-6:
+        return True 
     elif rbead > 3.0e-6:
-        return True
+        return False
     else:
         return True
 
@@ -99,6 +98,8 @@ grid_check = np.zeros((len(seps), len(heights)))
 Goutarr = np.zeros((len(seps), len(posvec), len(heights), 3))
 dim1arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
 dim2arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
+dim3arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
+dim4arr = np.zeros((len(r0s), len(seps), len(posvec), len(heights), 3))
 
 for fil_ind, fil in enumerate(raw_filenames):
 
@@ -136,6 +137,8 @@ for fil_ind, fil in enumerate(raw_filenames):
         for r0ind, r0 in enumerate(r0s):
             dim1arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+3]
             dim2arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+6]
+            dim3arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+9]
+            dim4arr[r0ind,sepind,:,heightind,ind] = dat[r0][ind+12]
 
 print(rbead)
 print("Done!")
@@ -161,6 +164,8 @@ try:
     np.save(os.path.join(out_path, 'Gravdata.npy'), Goutarr)
     np.save(os.path.join(out_path, 'Dim1data.npy'), dim1arr)
     np.save(os.path.join(out_path, 'Dim2data.npy'), dim2arr)
+    np.save(os.path.join(out_path, 'Dim3data.npy'), dim3arr)
+    np.save(os.path.join(out_path, 'Dim4data.npy'), dim4arr)
     np.save(os.path.join(out_path, 'xpos.npy'), seps + rbead)
     np.save(os.path.join(out_path, 'ypos.npy'), posvec)
     np.save(os.path.join(out_path, 'zpos.npy'), heights)

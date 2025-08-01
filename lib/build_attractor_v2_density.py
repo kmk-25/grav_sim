@@ -24,7 +24,7 @@ attractor_params['width_outersilicon'] = 25.0e-6
 
 attractor_params['height'] = 10.0e-6
 
-attractor_params['finger_length'] = 80.0e-6
+attractor_params['finger_length'] = 75.0e-6
 
 attractor_params['silicon_bridge'] = 2.0e-6
 attractor_params['include_bridge'] = False
@@ -46,6 +46,9 @@ attractor_params['total_width'] = \
               + (attractor_params['n_goldfinger'] - 1) \
                         * attractor_params['width_siliconfinger'] \
               + 2.0 * attractor_params['width_outersilicon']
+attractor_params['total_height'] = \
+                attractor_params['height'] \
+                        + 2*attractor_params['black_height']*attractor_params['include_black']
 
 
 def density_symmetric(x, y, z):
@@ -119,7 +122,7 @@ def density_symmetric(x, y, z):
 def build_3d_array(x_range=(-199.5e-6, 0e-6), dx=1.0e-6, \
                     y_range=(-249.5e-6, 250e-6), dy=1.0e-6, \
                     z_range=(-4.5e-6, 5e-6), dz=1.0e-6, \
-                    verbose=False):
+                    verbose=False, manualadjust=False):
     '''Build a 3D array of unit cells with coordinates defining
        the center of each unit cell. Grid values are the densities
        of those unit cells, assumed to be entirely one material.
@@ -134,6 +137,7 @@ def build_3d_array(x_range=(-199.5e-6, 0e-6), dx=1.0e-6, \
     xx = np.arange(x_range[0], x_range[1], dx)
     yy = np.arange(y_range[0], y_range[1], dy)
     zz = np.arange(z_range[0], z_range[1], dz)
+    if manualadjust: zz = np.append(zz, [-6.5e-6,6.5e-6])
     rho_grid = np.zeros((len(xx), len(yy), len(zz)))
 
     ### Shitty for loop over the values chosen
@@ -209,8 +213,8 @@ def plot_xy_density(zpos=0.0, x_range=(-599.5e-6, 10.0e-6), dx=1.0e-6, \
     cbar.ax.set_yticklabels(tick_labels)
     cbar.set_label('Density [kg/m$^3$]')
     fig.tight_layout()
-    plt.show()
-
+    #plt.show()
+    return fig, ax
 
 
 

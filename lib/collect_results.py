@@ -10,30 +10,27 @@ import bead_util as bu
 
 
 #parent = str( Path(os.path.abspath(__file__)).parents[1] )
-parent = os.path.expanduser('~') 
+parent = "/home/kmkohn/2024-2025/Thesis_analysis/FEA/Data/"
 
-raw_path = os.path.join(parent, 'raw_results')
-out_path = os.path.join(parent, 'results')
+raw_path = os.path.join(parent, f'rawdata_yukawa_platinumblack/1umspacing')
+out_path = os.path.join(parent, f'yukawa_platinumblack/1umspacing')
 
 # out_subdir = '4_7um-bead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells/'
 # out_subdir = '4_6um-gbead_1um-unit-cells_close/'
-# out_subdir = '7_6um-gbead_1um-unit-cells_z8um-attractor_master/'
+out_subdir = '10um/'
 # out_subdir = '5um-gbead_1um-unit-cells_master/'
-out_subdir = '7_6um-gbead_1um-unit-cells_onlyblack_5umspacing/'
 out_path = os.path.join(out_path, out_subdir)
 
 ### HAVE TO EDIT THIS FUNCTION TO PARSE SIMULATION OUTPUT
 ### THAT HAS MULTIPLE BEAD RADII. TRUE VALUE MEANS IT WILL
 ### BE INCLUDED
-
-### (I don't really know why this is here. For now just running one radius at a time so returning true)
 def rbead_cond(rbead):
-    return True
-    if rbead > 5.0e-6:
-        return False 
+    #return True
+    if rbead > 4.0e-6:
+        return True 
     elif rbead > 3.0e-6:
-        return True
+        return False
     else:
         return True
 
