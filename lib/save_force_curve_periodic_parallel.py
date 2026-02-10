@@ -226,28 +226,27 @@ def simulation(params):
     ### A thing that needs to be in every term (POSSIBLE SIGN AMBIGUITY)
     Gterm = 2. * rbead**3
 
-    ### Loop over the long array of bead positions and compute the force from
-    ### only the central finger. This can be sampled and added up to build the
+    ### Loop over the long array of bead positions and compute the fseporce from
+    ### only the centrsepal finger. This can be sampled and added up to build the
     ### force curve from the entire attractor
     Gforcecurves = [[], [], []]
+    # Precompute x and z separations (depend only on sep and height)
+    xsep = (sep + rbead) - xx2
+    zsep = height - zz2
+    # reshape for broadcasting into (nx, ny, nz)
+    xsep = xsep[:, None, None]
+    zsep = zsep[None, None, :]
+
     for ind, ypos in enumerate(beadposvec2):
-        beadpos = [sep+rbead, ypos, height]
+        # y separation vector (will broadcast into middle axis)
+        ysep = (ypos - yy2)[None, :, None]
 
-        ### These are used to compute projections and thus need to maintain sign.
-        ### Use the xx2, yy2, and zz2 arrays which are a subselections of the full
-        ### attractor covering only a single period of the fingers
-        xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                       beadpos[1] - yy2, \
-                                       beadpos[2] - zz2, indexing='ij')
-
-        ### Compute the separation between each point mass and the center 
-        ### of the microsphere
+        # compute full separation and prefactor without creating meshgrid
         full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
         ### Refer to a soon-to-exist document expanding on Alex R's
         prefac = -1.0 * ((2. * G * m2 * rhobead * np.pi) / (3. * full_sep**2))
 
-        ### Append the computed values for the force from a single finger
         Gforcecurves[0].append( np.sum(prefac * Gterm * xsep / full_sep) )
         Gforcecurves[1].append( np.sum(prefac * Gterm * ysep / full_sep) )
         Gforcecurves[2].append( np.sum(prefac * Gterm * zsep / full_sep) )
@@ -270,21 +269,14 @@ def simulation(params):
         ### Compute the contribution from the points external to the 
         ### periodicity, if desired
         if include_edge:
+            ysep3 = (ypos - yy3)[None, :, None]
 
-            ### sep parameter is assumed to be face to face
-            beadpos = [sep+rbead, ypos, height]
+            full_sep3 = np.sqrt(xsep**2 + ysep3**2 + zsep**2)
+            prefac = -1.0 * ((2. * G * m3 * rhobead * np.pi) / (3. * full_sep3**2))
 
-            ### These are used to compute projections and thus need to maintain sign
-            xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                           beadpos[1] - yy3, \
-                                           beadpos[2] - zz2, indexing='ij')
-            full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
-
-            prefac = -1.0 * ((2. * G * m3 * rhobead * np.pi) / (3. * full_sep**2))
-
-            newGs[0][ind] += np.sum(prefac * Gterm * xsep / full_sep) 
-            newGs[1][ind] += np.sum(prefac * Gterm * ysep / full_sep) 
-            newGs[2][ind] += np.sum(prefac * Gterm * zsep / full_sep)
+            newGs[0][ind] += np.sum(prefac * Gterm * xsep / full_sep3)
+            newGs[1][ind] += np.sum(prefac * Gterm * ysep3 / full_sep3)
+            newGs[2][ind] += np.sum(prefac * Gterm * zsep / full_sep3)
 
         ### Find the finger in which we're in front of, and compute an 
         ### equivalent position as if we're in front of the center finger
@@ -318,21 +310,8 @@ def simulation(params):
         ### Loop over the long array of values computing the force from a single finger
         yukforcecurves = [[], [], []]
         for ind, ypos in enumerate(beadposvec2):
+            s = full_sep - rbead
 
-            ### sep parameter is assumed to be face to face
-            beadpos = [sep+rbead, ypos, height]
-
-            #### These are used to compute projections and thus need to maintain sign
-            xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                           beadpos[1] - yy2, \
-                                           beadpos[2] - zz2, indexing='ij')
-
-            ### This isn't the full sep this time, because the Yukawa term depends on 
-            ### the distance between the point mass and the surface of the MS
-            s = np.sqrt(xsep**2 + ysep**2 + zsep**2) - rbead
-
-            ### Refer to the non-existent LaTeX document in ../documents/ to explain this.
-            ### Two position dependent terms
             prefac = -1.0 * ((2. * G * m2 * rhobead * np.pi) / (3. * (s + rbead)**2))
             yukterm = 3 * yuklambda**2 * (s + rbead + yuklambda) * func * np.exp( - s / yuklambda )
 
@@ -359,26 +338,14 @@ def simulation(params):
             ### Compute the contribution from the points external to the 
             ### periodicity, if desired
             if include_edge:
+                s3 = full_sep3 - rbead
 
-                beadpos = [sep+rbead, ypos, height]
+                prefac = -1.0 * ((2. * G * m3 * rhobead * np.pi) / (3. * (rbead + s3)**2))
+                yukterm = 3 * yuklambda**2 * (rbead + s3 + yuklambda) * func * np.exp( - s3 / yuklambda )
 
-                #### These are used to compute projections and thus need to maintain sign
-                xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                               beadpos[1] - yy3, \
-                                               beadpos[2] - zz2, indexing='ij')
-
-                ### This isn't the full sep this time, because the Yukawa term depends on 
-                ### the distance between the point mass and the surface of the MS
-                s = np.sqrt(xsep**2 + ysep**2 + zsep**2) - rbead
-
-                ### Refer to the non-existent LaTeX document in ../documents/ to explain this.
-                ### Two position dependent terms
-                prefac = -1.0 * ((2. * G * m3 * rhobead * np.pi) / (3. * (rbead + s)**2))
-                yukterm = 3 * yuklambda**2 * (rbead + s + yuklambda) * func * np.exp( - s / yuklambda )
-
-                newyuks[0][ind] += np.sum(prefac * yukterm * xsep / (s + rbead))
-                newyuks[1][ind] += np.sum(prefac * yukterm * ysep / (s + rbead)) 
-                newyuks[2][ind] += np.sum(prefac * yukterm * zsep / (s + rbead)) 
+                newyuks[0][ind] += np.sum(prefac * yukterm * xsep / full_sep3)
+                newyuks[1][ind] += np.sum(prefac * yukterm * ysep3 / full_sep3)
+                newyuks[2][ind] += np.sum(prefac * yukterm * zsep / full_sep3)
 
             ### Find the finger in which we're in front of, and compute an 
             ### equivalent position as if we're in front of the center finger
