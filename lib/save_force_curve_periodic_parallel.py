@@ -350,12 +350,13 @@ def simulation(params):
             ### Find the finger in which we're in front of, and compute an 
             ### equivalent position as if we're in front of the center finger
             finger_ind, newypos = find_ind(ypos)
+            y_calcinds = newypos + (finger_inds+finger_ind) * full_period
 
             ### Sample the interpolating functions we built before, with one sample 
             ### for each finger, properly displaced
-            newyuks[0][ind] += np.sum(yukX(newypos + (finger_inds+finger_ind) * full_period))
-            newyuks[1][ind] += np.sum(yukY(newypos + (finger_inds+finger_ind) * full_period))
-            newyuks[2][ind] += np.sum(yukZ(newypos + (finger_inds+finger_ind) * full_period))
+            newyuks[0][ind] += np.sum(yukX(y_calcinds))
+            newyuks[1][ind] += np.sum(yukY(y_calcinds))
+            newyuks[2][ind] += np.sum(yukZ(y_calcinds))
             stop = time.time()
             calc_times.append(stop - start)
 

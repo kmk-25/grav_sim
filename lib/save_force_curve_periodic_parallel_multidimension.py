@@ -228,18 +228,22 @@ def simulation(params):
     Gforcecurves_dim2 = [[], [], []]
     Gforcecurves_dim3 = [[], [], []]
     Gforcecurves_dim4 = [[], [], []]
+
+    # Precompute x and z separations (depend only on sep and height)
+    xsep = (sep + rbead) - xx2
+    zsep = height - zz2
+    # reshape for broadcasting into (nx, ny, nz)
+    xsep = xsep[:, None, None]
+    zsep = zsep[None, None, :]
     for ind, ypos in enumerate(beadposvec2):
         beadpos = [sep+rbead, ypos, height]
 
         ### These are used to compute projections and thus need to maintain sign.
         ### Use the xx2, yy2, and zz2 arrays which are a subselections of the full
         ### attractor covering only a single period of the fingers
-        xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                       beadpos[1] - yy2, \
-                                       beadpos[2] - zz2, indexing='ij')
+        ysep = (ypos - yy2)[None, :, None]
 
-        ### Compute the separation between each point mass and the center 
-        ### of the microsphere
+        # compute full separation and prefactor without creating meshgrid
         full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
 
         gravfac = 4*rbead**3/3
@@ -253,25 +257,29 @@ def simulation(params):
         prefac = -1.0 * (G * m2 * rhobead * np.pi)/np.square(full_sep)
 
         ### Append the computed values for the force from a single finger
-        Gforcecurves[0].append( np.sum(prefac * gravfac * xsep / full_sep) )
-        Gforcecurves[1].append( np.sum(prefac * gravfac * ysep / full_sep) )
-        Gforcecurves[2].append( np.sum(prefac * gravfac * zsep / full_sep) )
-
-        Gforcecurves_dim1[0].append( np.sum(prefac * dim1fac * xsep / full_sep) )
-        Gforcecurves_dim1[1].append( np.sum(prefac * dim1fac * ysep / full_sep) )
-        Gforcecurves_dim1[2].append( np.sum(prefac * dim1fac * zsep / full_sep) )
-
-        Gforcecurves_dim2[0].append( np.sum(prefac * dim2fac * xsep / full_sep) )
-        Gforcecurves_dim2[1].append( np.sum(prefac * dim2fac * ysep / full_sep) )
-        Gforcecurves_dim2[2].append( np.sum(prefac * dim2fac * zsep / full_sep) )
+        x_basefac = prefac * xsep / full_sep
+        y_basefac = prefac * ysep / full_sep
+        z_basefac = prefac * zsep / full_sep
         
-        Gforcecurves_dim3[0].append( np.sum(prefac * dim3fac * xsep / full_sep) )
-        Gforcecurves_dim3[1].append( np.sum(prefac * dim3fac * ysep / full_sep) )
-        Gforcecurves_dim3[2].append( np.sum(prefac * dim3fac * zsep / full_sep) )
-        
-        Gforcecurves_dim4[0].append( np.sum(prefac * dim4fac * xsep / full_sep) )
-        Gforcecurves_dim4[1].append( np.sum(prefac * dim4fac * ysep / full_sep) )
-        Gforcecurves_dim4[2].append( np.sum(prefac * dim4fac * zsep / full_sep) )
+        Gforcecurves[0].append( np.sum(gravfac * x_basefac) )
+        Gforcecurves[1].append( np.sum(gravfac * y_basefac) )
+        Gforcecurves[2].append( np.sum(gravfac * z_basefac) )
+
+        Gforcecurves_dim1[0].append( np.sum(dim1fac * x_basefac) )
+        Gforcecurves_dim1[1].append( np.sum(dim1fac * y_basefac) )
+        Gforcecurves_dim1[2].append( np.sum(dim1fac * z_basefac) )
+
+        Gforcecurves_dim2[0].append( np.sum(dim2fac * x_basefac) )
+        Gforcecurves_dim2[1].append( np.sum(dim2fac * y_basefac) )
+        Gforcecurves_dim2[2].append( np.sum(dim2fac * z_basefac) )
+
+        Gforcecurves_dim3[0].append( np.sum(dim3fac * x_basefac) )
+        Gforcecurves_dim3[1].append( np.sum(dim3fac * y_basefac) )
+        Gforcecurves_dim3[2].append( np.sum(dim3fac * z_basefac) )
+
+        Gforcecurves_dim4[0].append( np.sum(dim4fac * x_basefac) )
+        Gforcecurves_dim4[1].append( np.sum(dim4fac * y_basefac) )
+        Gforcecurves_dim4[2].append( np.sum(dim4fac * z_basefac) )
 
     Gforcecurves = np.array(Gforcecurves)
     Gforcecurves_dim1 = np.array(Gforcecurves_dim1)
@@ -315,15 +323,9 @@ def simulation(params):
         ### Compute the contribution from the points external to the 
         ### periodicity, if desired
         if include_edge:
+            ysep3 = (ypos - yy3)[None, :, None]
 
-            ### sep parameter is assumed to be face to face
-            beadpos = [sep+rbead, ypos, height]
-
-            ### These are used to compute projections and thus need to maintain sign
-            xsep, ysep, zsep = np.meshgrid(beadpos[0] - xx2, \
-                                           beadpos[1] - yy3, \
-                                           beadpos[2] - zz2, indexing='ij')
-            full_sep = np.sqrt(xsep**2 + ysep**2 + zsep**2)
+            full_sep = np.sqrt(xsep**2 + ysep3**2 + zsep**2)
 
             gravfac = 4*rbead**3/3
             dim1fac = -(2*rbead*full_sep+np.log((-rbead+full_sep)/(rbead+full_sep))*(rbead**2+np.square(full_sep)))
@@ -336,51 +338,56 @@ def simulation(params):
             ### Refer to a soon-to-exist document expanding on Alex R's
             prefac = -1.0 * (G * m3 * rhobead * np.pi)/np.square(full_sep)
 
-            newGs[0][ind] += np.sum(prefac * gravfac * xsep / full_sep) 
-            newGs[1][ind] += np.sum(prefac * gravfac * ysep / full_sep) 
-            newGs[2][ind] += np.sum(prefac * gravfac * zsep / full_sep)
+            x_basefac = prefac * xsep / full_sep
+            y_basefac = prefac * ysep3 / full_sep
+            z_basefac = prefac * zsep / full_sep
 
-            newGs_dim1[0][ind] += np.sum(prefac * dim1fac * xsep / full_sep) 
-            newGs_dim1[1][ind] += np.sum(prefac * dim1fac * ysep / full_sep) 
-            newGs_dim1[2][ind] += np.sum(prefac * dim1fac * zsep / full_sep)
+            newGs[0][ind] += np.sum(gravfac * x_basefac) 
+            newGs[1][ind] += np.sum(gravfac * y_basefac) 
+            newGs[2][ind] += np.sum(gravfac * z_basefac)
 
-            newGs_dim2[0][ind] += np.sum(prefac * dim2fac * xsep / full_sep) 
-            newGs_dim2[1][ind] += np.sum(prefac * dim2fac * ysep / full_sep) 
-            newGs_dim2[2][ind] += np.sum(prefac * dim2fac * zsep / full_sep)
-            
-            newGs_dim3[0][ind] += np.sum(prefac * dim3fac * xsep / full_sep) 
-            newGs_dim3[1][ind] += np.sum(prefac * dim3fac * ysep / full_sep) 
-            newGs_dim3[2][ind] += np.sum(prefac * dim3fac * zsep / full_sep)
-            
-            newGs_dim4[0][ind] += np.sum(prefac * dim4fac * xsep / full_sep) 
-            newGs_dim4[1][ind] += np.sum(prefac * dim4fac * ysep / full_sep) 
-            newGs_dim4[2][ind] += np.sum(prefac * dim4fac * zsep / full_sep)
+            newGs_dim1[0][ind] += np.sum(dim1fac * x_basefac) 
+            newGs_dim1[1][ind] += np.sum(dim1fac * y_basefac) 
+            newGs_dim1[2][ind] += np.sum(dim1fac * z_basefac)
+
+            newGs_dim2[0][ind] += np.sum(dim2fac * x_basefac) 
+            newGs_dim2[1][ind] += np.sum(dim2fac * y_basefac) 
+            newGs_dim2[2][ind] += np.sum(dim2fac * z_basefac)
+
+            newGs_dim3[0][ind] += np.sum(dim3fac * x_basefac) 
+            newGs_dim3[1][ind] += np.sum(dim3fac * y_basefac) 
+            newGs_dim3[2][ind] += np.sum(dim3fac * z_basefac)
+
+            newGs_dim4[0][ind] += np.sum(dim4fac * x_basefac) 
+            newGs_dim4[1][ind] += np.sum(dim4fac * y_basefac) 
+            newGs_dim4[2][ind] += np.sum(dim4fac * z_basefac)
 
         ### Find the finger in which we're in front of, and compute an 
         ### equivalent position as if we're in front of the center finger
         finger_ind, newypos = find_ind(ypos)
+        y_calcinds = newypos + (finger_inds+finger_ind) * full_period
 
         ### Sample the interpolating functions we built before, with one sample
         ### for each finger, properly displaced
-        newGs[0][ind] += np.sum(GX(newypos + (finger_inds+finger_ind) * full_period))
-        newGs[1][ind] += np.sum(GY(newypos + (finger_inds+finger_ind) * full_period))
-        newGs[2][ind] += np.sum(GZ(newypos + (finger_inds+finger_ind) * full_period))  
+        newGs[0][ind] += np.sum(GX(y_calcinds))
+        newGs[1][ind] += np.sum(GY(y_calcinds))
+        newGs[2][ind] += np.sum(GZ(y_calcinds))  
 
-        newGs_dim1[0][ind] += np.sum(GX_dim1(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim1[1][ind] += np.sum(GY_dim1(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim1[2][ind] += np.sum(GZ_dim1(newypos + (finger_inds+finger_ind) * full_period))  
+        newGs_dim1[0][ind] += np.sum(GX_dim1(y_calcinds))
+        newGs_dim1[1][ind] += np.sum(GY_dim1(y_calcinds))
+        newGs_dim1[2][ind] += np.sum(GZ_dim1(y_calcinds))  
 
-        newGs_dim2[0][ind] += np.sum(GX_dim2(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim2[1][ind] += np.sum(GY_dim2(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim2[2][ind] += np.sum(GZ_dim2(newypos + (finger_inds+finger_ind) * full_period)) 
-        
-        newGs_dim3[0][ind] += np.sum(GX_dim3(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim3[1][ind] += np.sum(GY_dim3(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim3[2][ind] += np.sum(GZ_dim3(newypos + (finger_inds+finger_ind) * full_period)) 
-        
-        newGs_dim4[0][ind] += np.sum(GX_dim4(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim4[1][ind] += np.sum(GY_dim4(newypos + (finger_inds+finger_ind) * full_period))
-        newGs_dim4[2][ind] += np.sum(GZ_dim4(newypos + (finger_inds+finger_ind) * full_period)) 
+        newGs_dim2[0][ind] += np.sum(GX_dim2(y_calcinds))
+        newGs_dim2[1][ind] += np.sum(GY_dim2(y_calcinds))
+        newGs_dim2[2][ind] += np.sum(GZ_dim2(y_calcinds))
+
+        newGs_dim3[0][ind] += np.sum(GX_dim3(y_calcinds))
+        newGs_dim3[1][ind] += np.sum(GY_dim3(y_calcinds))
+        newGs_dim3[2][ind] += np.sum(GZ_dim3(y_calcinds))
+
+        newGs_dim4[0][ind] += np.sum(GX_dim4(y_calcinds))
+        newGs_dim4[1][ind] += np.sum(GY_dim4(y_calcinds))
+        newGs_dim4[2][ind] += np.sum(GZ_dim4(y_calcinds))
 
 
         stop = time.time()
