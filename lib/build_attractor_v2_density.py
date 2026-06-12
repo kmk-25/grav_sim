@@ -2,6 +2,8 @@ import time, sys
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.colors import ListedColormap
 
 
 ### Keep all the parameters in a dictionary so they can be easily
@@ -160,9 +162,38 @@ def build_3d_array(x_range=(-199.5e-6, 0e-6), dx=1.0e-6, \
 
 def plot_xy_density(zpos=0.0, x_range=(-599.5e-6, 10.0e-6), dx=1.0e-6, \
                     y_range=(-249.5e-6, 250e-6), dy=1.0e-6, \
-                    verbose=False, cmap='plasma'):
-    '''Plotting function for qualitative validation of the attractor density function
-       subject to the same edge effect issues discussed above.'''
+                    verbose=False, cmap='twocolor', \
+                    centers=False, ringparams = None):
+    '''Plot the attractor density in the x-y plane at a fixed z position.
+
+    Intended for qualitative validation of the attractor geometry.  Subject to
+    the same voxel edge effects as build_3d_array.
+
+    Parameters
+    ----------
+    zpos : float
+        z coordinate [m] of the slice to plot.
+    x_range : (float, float)
+        (start, stop) of the x axis [m]. Voxel centres are placed at
+        x_range[0], x_range[0]+dx, … up to (but not including) x_range[1].
+    dx : float
+        Voxel size along x [m].
+    y_range : (float, float)
+        (start, stop) of the y axis [m], same convention as x_range.
+    dy : float
+        Voxel size along y [m].
+    verbose : bool
+        If True, print grid dimensions and elapsed time.
+    cmap : str or Colormap
+        'twocolor' (default) uses a two-colour map — grey for silicon, gold for
+        gold.  Any matplotlib colormap name or object is also accepted.
+    centers : bool
+        If True, overlay a red scatter plot marking every voxel centre of mass.
+    ringparams : tuple or None
+        If provided, overlay a translucent mask and two circle outlines showing
+        a shell of shell-radius rtarget ± rbead centred at (xcent, ycent, zcent).
+        Format: (xcent, ycent, zcent, rtarget, rbead) all in metres.
+    '''
 
     start = time.time()
 
@@ -170,6 +201,10 @@ def plot_xy_density(zpos=0.0, x_range=(-599.5e-6, 10.0e-6), dx=1.0e-6, \
     xx = np.arange(x_range[0], x_range[1], dx)
     yy = np.arange(y_range[0], y_range[1], dy)
     rho_grid = np.zeros((len(xx), len(yy)))
+
+    if cmap == "twocolor":
+        _cmap = ListedColormap(['grey','gold'])
+    else: _cmap = cmap
 
     ### Shitty slow for loops. The density function is hard to vectorize
     ### given the somewhat complex structure of the attractor
@@ -192,26 +227,67 @@ def plot_xy_density(zpos=0.0, x_range=(-599.5e-6, 10.0e-6), dx=1.0e-6, \
     ### Plot the transpose since arrays when plotted as images are interpreted as 
     ### (row, column) which translates to (y, x), assuming x is horizontal, thus 
     ### requiring the transpose
-    img = ax.imshow(rho_grid.T, cmap=cmap, \
+    img = ax.imshow(rho_grid.T, cmap=_cmap, \
                 aspect=(x_range[1] - x_range[0])/(y_range[1] - y_range[0]),\
                 extent=[x_range[0]*1e6, x_range[1]*1e6, y_range[0]*1e6, y_range[1]*1e6], \
+                interpolation='none', \
                 vmin=0.0, vmax=20000)
+
+    if centers:
+        cps = ax.scatter(*np.meshgrid(xx*1e6,yy*1e6), s=9, color='red', label='Voxel centers of mass')
+    
+    if ringparams is not None:
+        try:
+            (xcent, ycent, zcent, rtarget, rbead) = ringparams
+        except:
+            raise ValueError("Ringparams are in the format (xcent, ycent, zcent, rtarget, rbead)")
+        xxx, yyy = np.meshgrid(xx, yy)
+        
+        r = np.sqrt((xxx-xcent)**2 + (yyy-ycent)**2 + (zpos - zcent)**2)
+        ring_mask = (r >= rtarget - rbead) & (r <= rtarget + rbead)
+
+        overlay = np.zeros((*ring_mask.shape, 4))
+        overlay[..., 3] = np.where(ring_mask, 0.0, 0.45)
+
+        ax.imshow(overlay, \
+                  extent=[(x_range[0]-dx/2)*1e6, x_range[1]*1e6, (y_range[0]-dy/2)*1e6, y_range[1]*1e6], \
+                  interpolation="none",zorder = 5)
+        ax.add_patch(mpatches.Circle((xcent*1e6, ycent*1e6), 1e6*(rtarget + rbead), fill=False, edgecolor="white", linewidth=1, zorder=11))
+        ax.add_patch(mpatches.Circle((xcent*1e6, ycent*1e6), 1e6*(rtarget - rbead), fill=False, edgecolor="white", linewidth=1, zorder=11))
 
     rho_silicon = attractor_params['rho_silicon']
     rho_gold = attractor_params['rho_gold']
 
-    ### Some custom and hardcoded ticks assuming we will be using gold and silicon to 
-    ### to make our attractors, might be worthwhile to make this dynamic for two materials
-    tick_locs = [0.0, rho_silicon, 5000.0, 7500.0, 10000.0, 12500.0,\
-                 15000.0, 17500.0, rho_gold]
-    tick_labels = ['0', '{:0.1f} - Si'.format(rho_silicon), '5000', '7500', \
-                    '10000', '12500', '15000', '17500', '{:0.1f} - Au'.format(rho_gold)]
-
     ax.set_xlabel('$x$-coordinate [um]')
     ax.set_ylabel('$y$-coordinate [um]')
-    cbar = fig.colorbar(img, ax=ax, ticks=tick_locs)
-    cbar.ax.set_yticklabels(tick_labels)
-    cbar.set_label('Density [kg/m$^3$]')
+
+    if cmap == "twocolor":
+        patch1 = mpatches.Patch(color='grey', label=f"Si - {(rho_silicon/1000):0.2f} {r'$\mathrm{g/cm^3}$'}")
+        patch2 = mpatches.Patch(color='gold', label=f"Au - {(rho_gold/1000):0.2f} {r'$\mathrm{g/cm^3}$'}$")
+        
+        if centers:
+            fig.legend(handles=[patch1, patch2, cps])
+        else:
+            fig.legend(handles=[patch1, patch2])
+
+        zero_mask = (rho_grid.T == 0)
+        zero_overlay = np.zeros((*zero_mask.shape, 4))
+        zero_overlay[..., 3] = np.where(zero_mask, 1, 0.0)
+        ax.imshow(zero_overlay, \
+            extent=[(x_range[0]-dx/2)*1e6, x_range[1]*1e6, (y_range[0]-dy/2)*1e6, y_range[1]*1e6], \
+            interpolation="none",zorder = 5)
+
+
+    else:
+        ### Some custom and hardcoded ticks assuming we will be using gold and silicon to 
+        ### to make our attractors, might be worthwhile to make this dynamic for two materials
+        tick_locs = [0.0, rho_silicon, 5000.0, 7500.0, 10000.0, 12500.0,\
+                    15000.0, 17500.0, rho_gold]
+        tick_labels = ['0', '{:0.1f} - Si'.format(rho_silicon), '5000', '7500', \
+                    '10000', '12500', '15000', '17500', '{:0.1f} - Au'.format(rho_gold)]
+        cbar = fig.colorbar(img, ax=ax, ticks=tick_locs)
+        cbar.ax.set_yticklabels(tick_labels)
+        cbar.set_label('Density [kg/m$^3$]')
     fig.tight_layout()
     #plt.show()
     return fig, ax
